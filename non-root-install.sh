@@ -116,6 +116,8 @@ install_redis () {
     curl -sSLo $HOME/redis-stable.tar.gz  http://download.redis.io/redis-stable.tar.gz >> $logfile 2>&1
     tar xzf redis-stable.tar.gz >> $logfile 2>&1
     cd redis-stable && make >> $logfile 2>&1
+    sudo make install
+    nohup redis-server &
     cd
 }
 
