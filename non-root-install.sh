@@ -34,7 +34,7 @@ rubyenv() {
 	source /home/peatio/.rvm/scripts/rvm
 	echo 'export PATH="/home/$user/.rbenv/plugins/ruby-build/bin:/home/$user/.rbenv/bin:$PATH"' >> /home/$user/.bashrc
 	rbenv init -  >> /home/$user/.bashrc
-	git clone git://github.com/sstephenson/ruby-build.git /home/$user/.rbenv/plugins/ruby-build
+	git clone git://github.com/sstephenson/ruby-build.git /home/$user/.rbenv/plugins/ruby-build >> $logfile 2>&1
 	echo 'gem: --no-ri --no-rdoc' >> /home/$user/.gemrc
 	gem install bundler
 	source ~/.bashrc
@@ -116,7 +116,7 @@ install_redis () {
     curl -sSLo $HOME/redis-stable.tar.gz  http://download.redis.io/redis-stable.tar.gz >> $logfile 2>&1
     tar xzf redis-stable.tar.gz >> $logfile 2>&1
     cd redis-stable && make >> $logfile 2>&1
-    sudo make install
+    sudo make install >> $logfile 2>&1
     nohup redis-server &
     cd
 }
@@ -136,8 +136,9 @@ install_rabbitmq () {
     sudo apt-get -y install esl-erlang >> $logfile 2>&1
     sudo apt-get -y install init-system-helpers socat adduser logrotate >> $logfile 2>&1
     
-    sudo chmod 777 /etc/apt/sources.list.d/bintray.rabbitmq.list
+    sudo chmod 777 /etc/apt/sources.list.d
     sudo echo "deb https://dl.bintray.com/rabbitmq/debian bionic main" >> /etc/apt/sources.list.d/bintray.rabbitmq.list
+    sudo chmod 755 /etc/apt/sources.list.d
     sudo chmod 600 /etc/apt/sources.list.d/bintray.rabbitmq.list
     wget https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc >> $logfile 2>&1
     sudo apt-key add rabbitmq-release-signing-key.asc  >> $logfile 2>&1
@@ -245,6 +246,8 @@ install_peatio () {
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
     sudo npm install -g yarn  >> $logfile 2>&1
+    bundle install  >> $logfile 2>&1
+    echo -e "\n\n running : bundle exec rake tmp:create yarn:install assets:precompile\n\n"
     bundle exec rake tmp:create yarn:install assets:precompile  >> $logfile 2>&1
 
     # pusher
@@ -279,8 +282,11 @@ EOF
     export DATABASE_HOST=$apphost
     export DATABASE_USER=peatio
     export DATABASE_PASS=$mysqlroot
+    echo -e "\n\n  Running: bundle exec rake db:setup\n\n"
     bundle exec rake db:setup  >> $logfile 2>&1
+    echo -e "\n\n  Running: god -c lib/daemons/daemons.god"
     god -c lib/daemons/daemons.god  >> $logfile 2>&1
+    echo -e "\n\n  Running: bundle exec rake solvency:liability_proof\n\n"
     bundle exec rake solvency:liability_proof  >> $logfile 2>&1
 
     cat << EOF | tee -a $logfile
@@ -300,6 +306,7 @@ EOF
 EOF
 
     # this should really be deamonized... need to see if there is a reason it's not
+    echo -e "\n\n   Running: nohup bundle exec rails server &\n\n"
     nohup bundle exec rails server &  >> $logfile 2>&1
     cd  >> $logfile 2>&1
 }
@@ -366,6 +373,19 @@ EOF
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # MAIN
+if [ ! "$(whoami)" = "peatio" ]
+then
+    echo -e "\n !! This script shold be run by the \"peatio\" user!"
+    echo -e " !! you are currently logged in as $(whoami)"
+    echo -e "    If the peatio user does not exist yet do the following (as root):"
+    echo -e "\n    useradd -c \"Peatio install user\" --groups sudo --shell /bin/bash --create-home peatio\n"
+    echo -e "    Then run \"visudo\" and add the following line to the bottom of the file"
+    echo -e "\n    peatio    ALL=(ALL:ALL) NOPASSWD: ALL\n"
+    echo -e "    Finally, copy this script $0 to /home/peatio, run \"su - peatio\""
+    echo -e "    and \"./$(basename $0)\"\n"
+    exit 1
+fi
+
 cd $HOME
 umask 0077
 sudo touch $logfile
