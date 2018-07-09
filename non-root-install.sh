@@ -60,7 +60,7 @@ install_ruby () {
 
     curl -sSL https://get.rvm.io | bash -s stable --ruby=2.5.0 --gems=rails >> $logfile 2>&1
     sudo apt-get -y install ruby-dev ruby-bundler >> $logfile 2>&1
-    rubyenv
+    #rubyenv
 }
 
 install_mysql () {
@@ -286,8 +286,8 @@ EOF
     bundle exec rake db:setup  >> $logfile 2>&1
     echo -e "\n\n  Running: god -c lib/daemons/daemons.god"
     god -c lib/daemons/daemons.god  >> $logfile 2>&1
-    echo -e "\n\n  Running: bundle exec rake solvency:liability_proof\n\n"
-    bundle exec rake solvency:liability_proof  >> $logfile 2>&1
+    #echo -e "\n\n  Running: bundle exec rake solvency:liability_proof\n\n"
+    #bundle exec rake solvency:liability_proof  >> $logfile 2>&1
 
     cat << EOF | tee -a $logfile
     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
