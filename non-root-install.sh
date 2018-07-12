@@ -146,6 +146,8 @@ install_rabbitmq () {
     sudo apt-get -y install rabbitmq-server  >> $logfile 2>&1
     sudo rabbitmq-plugins enable rabbitmq_management  >> $logfile 2>&1
     sudo chown rabbitmq /etc/rabbitmq/enabled_plugins  >> $logfile 2>&1
+    # NOTE! If rabbitmq server fails to start make sure the hostname is listed on
+    # the loopback entry in /etc/hosts.
     sudo systemctl start rabbitmq-server.service  >> $logfile 2>&1
     sudo systemctl restart rabbitmq-server.service >> $logfile 2>&1
     wget http://localhost:15672/cli/rabbitmqadmin >> $logfile 2>&1
