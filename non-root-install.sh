@@ -133,7 +133,7 @@ install_rabbitmq () {
     wget https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc >> $logfile 2>&1
     sudo apt-key add erlang_solutions.asc >> $logfile 2>&1
     sudo apt-get update >> $logfile 2>&1
-    sudo apt-get -y install esl-erlang >> $logfile 2>&1
+    sudo apt-get -y install esl-erlang esl=erlang=1:20.3.6  >> $logfile 2>&1
     sudo apt-get -y install init-system-helpers socat adduser logrotate >> $logfile 2>&1
     
     sudo chmod 777 /etc/apt/sources.list.d
@@ -144,7 +144,7 @@ install_rabbitmq () {
     sudo apt-key add rabbitmq-release-signing-key.asc  >> $logfile 2>&1
     sudo apt-get update >> $logfile 2>&1
     sudo apt-get -y install rabbitmq-server  >> $logfile 2>&1
-    sudo rabbitmq-plugins enable rabbitmq_management  >> $logfile 2>&1
+    sudo /usr/sbin/rabbitmq-plugins enable rabbitmq_management  >> $logfile 2>&1
     sudo chown rabbitmq /etc/rabbitmq/enabled_plugins  >> $logfile 2>&1
     # NOTE! If rabbitmq server fails to start make sure the hostname is listed on
     # the loopback entry in /etc/hosts.
@@ -163,7 +163,8 @@ install_bitcoind () {
     # -----------------------------------------------------------------------------
     # Install bitcoind
     echo -e "\n - Installing bitcoind" | tee -a $logfile
-    sudo add-apt-repository ppa:bitcoin/bitcoin  | tee -a $logfile 
+    #sudo add-apt-repository ppa:bitcoin/bitcoin  | tee -a $logfile 
+    echo -e "\n" | sudo add-apt-repository ppa:bitcoin/bitcoin >> $logfile 2>&1
     sudo apt-get update >> $logfile 2>&1
     sudo apt-get -y install bitcoind  >> $logfile 2>&1
     
@@ -229,9 +230,10 @@ install_imagemagic () {
 install_peatio () {
     # -----------------------------------------------------------------------------
     # Install Peatio
-    echo -e "\n - Installing Peatio" | tee -a $logfile
-    PATH=/usr/bin:/bin:/snap/bin:/home/peatio/peatio/bin:/usr/local/bin
+    echo -e "\n - Installing Peatio (This will *also* take a while)" | tee -a $logfile
+    PATH=/usr/bin:/bin:/snap/bin:/usr/local/bin:/usr/sbin
     export PATH
+    cd
 
     # this should be done by a non-root user, skip for now but revisit
     #useradd -c "Peatio install user" --groups sudo --shell /bin/bash --create-home peatio
@@ -241,16 +243,21 @@ install_peatio () {
     #sudo -iu peatio "rbenv init - >> .bashrc "
     #sudo -iu peatio "cd peatio && git checkout 1-8-stable  && bundle install"
 
+    mkdir code
+    cd code
     git clone https://github.com/rubykube/peatio.git  >> $logfile 2>&1
     cd peatio  >> $logfile 2>&1
     # make sure the same version for peatio-trading-ui is installed
     git checkout 1-7-stable    >> $logfile 2>&1
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
-    sudo npm install -g yarn  >> $logfile 2>&1
-    bundle install  >> $logfile 2>&1
-    echo -e "\n\n running : bundle exec rake tmp:create yarn:install assets:precompile\n\n"
-    bundle exec rake tmp:create yarn:install assets:precompile  >> $logfile 2>&1
+    ###sudo npm install -g yarn  >> $logfile 2>&1
+    npm install -g yarn  >> $logfile 2>&1
+    ###bundle install  >> $logfile 2>&1
+    ###echo -e "\n\n running : bundle exec rake tmp:create yarn:install assets:precompile\n\n" >> $logfile 2>&1
+    ###bundle exec rake tmp:create yarn:install assets:precompile  >> $logfile 2>&1
+    echo -e "\n\n running : bundle exec rake tmp:create yarn:install\n\n" >> $logfile 2>&1
+    bundle exec rake tmp:create yarn:install >> $logfile 2>&1
 
     # pusher
     cat << EOF | tee -a $logfile
@@ -284,12 +291,21 @@ EOF
     export DATABASE_HOST=$apphost
     export DATABASE_USER=peatio
     export DATABASE_PASS=$mysqlroot
-    echo -e "\n\n  Running: bundle exec rake db:setup\n\n"
-    bundle exec rake db:setup  >> $logfile 2>&1
-    echo -e "\n\n  Running: god -c lib/daemons/daemons.god"
+
+    ###echo -e "\n\n  Running: bundle exec rake db:setup\n\n" >> $logfile 2>&1
+    ###bundle exec rake db:setup  >> $logfile 2>&1
+    echo -e "\n\n  Running: bundle exec rake db:create\n\n" >> $logfile 2>&1
+    bundle exec rake db:create
+    echo -e "\n\n  Running: bundle exec rake db:migrate\n\n" >> $logfile 2>&1
+    bundle exec rake db:migrate
+    echo -e "\n\n  Running: bundle exec rake currencies:seed\n\n" >> $logfile 2>&1
+    bundle exec rake currencies:seed
+    echo -e "\n\n  Running: bundle exec rake markets:seed\n\n" >> $logfile 2>&1
+    bundle exec rake markets:seed
+    echo -e "\n\n  Running: god -c lib/daemons/daemons.god" >> $logfile 2>&1
     god -c lib/daemons/daemons.god  >> $logfile 2>&1
-    #echo -e "\n\n  Running: bundle exec rake solvency:liability_proof\n\n"
-    #bundle exec rake solvency:liability_proof  >> $logfile 2>&1
+    ###echo -e "\n\n  Running: bundle exec rake solvency:liability_proof\n\n" >> $logfile 2>&1
+    ###bundle exec rake solvency:liability_proof  >> $logfile 2>&1
 
     cat << EOF | tee -a $logfile
     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -307,8 +323,10 @@ EOF
 
 EOF
 
+    # need to add a line here to edit config/application.yml
+
     # this should really be deamonized... need to see if there is a reason it's not
-    echo -e "\n\n   Running: nohup bundle exec rails server &\n\n"
+    echo -e "\n\n   Running: nohup bundle exec rails server &\n\n" >> $logfile 2>&1
     nohup bundle exec rails server &  >> $logfile 2>&1
     cd  >> $logfile 2>&1
 }
@@ -316,7 +334,7 @@ EOF
 install_peatio_tradingui () {
     # -----------------------------------------------------------------------------
     # Install Peatio-trading-ui
-    cd
+    cd code
     echo -e "\n - Installing Peatio-trading-ui" | tee -a $logfile
     git clone https://github.com/rubykube/peatio-trading-ui.git  >> $logfile 2>&1
     cd peatio-trading-ui  >> $logfile 2>&1
@@ -332,6 +350,7 @@ install_peatio_tradingui () {
        PLATFORM_ROOT_URL: http://ec2-xx-xx-xxx-xxx.compute-1.amazonaws.com
 
 EOF
+    bundle exec rails server -p 4000
     cd  >> $logfile 2>&1
 }
 
