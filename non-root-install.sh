@@ -21,9 +21,14 @@
 #           (also using the visudo command ) as I believe escalated 
 #           privileges are only required for installation.
 #
+#           also: ensure the hostname of the box (or appserver if multiple 
+#           boxes are used) appears on the 127.0.0.1 line of /etc/hosts or
+#           RabbitMQ won't start correctly
+#
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 logfile="/var/log/peatio-install"
 sep="# -----------------------------------------------------------------------------"
+peatio_version="1-7-stable"
 
 # -----------------------------------------------------------------------------
 # Setup ruby environment
@@ -231,32 +236,24 @@ install_peatio () {
     # -----------------------------------------------------------------------------
     # Install Peatio
     echo -e "\n - Installing Peatio (This will *also* take a while)" | tee -a $logfile
-    PATH=/usr/bin:/bin:/snap/bin:/usr/local/bin:/usr/sbin
-    export PATH
     cd
-
-    # this should be done by a non-root user, skip for now but revisit
-    #useradd -c "Peatio install user" --groups sudo --shell /bin/bash --create-home peatio
-    #sed -i 's/^%sudo/%sudo    ALL=(ALL:ALL) NOPASSWD: ALL #/g' /etc/sudoers
-    #sudo -iu peatio git clone https://github.com/rubykube/peatio.git
-    # make sure the same version for peatio-trading-ui is installed
-    #sudo -iu peatio "rbenv init - >> .bashrc "
-    #sudo -iu peatio "cd peatio && git checkout 1-8-stable  && bundle install"
-
     mkdir code
     cd code
     git clone https://github.com/rubykube/peatio.git  >> $logfile 2>&1
     cd peatio  >> $logfile 2>&1
+
     # make sure the same version for peatio-trading-ui is installed
-    git checkout 1-7-stable    >> $logfile 2>&1
+    git checkout $peatio_version  >> $logfile 2>&1
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
-    ###sudo npm install -g yarn  >> $logfile 2>&1
-    npm install -g yarn  >> $logfile 2>&1
+    sudo npm install -g yarn  >> $logfile 2>&1
+    ###npm install -g yarn  >> $logfile 2>&1
     ###bundle install  >> $logfile 2>&1
     ###echo -e "\n\n running : bundle exec rake tmp:create yarn:install assets:precompile\n\n" >> $logfile 2>&1
     ###bundle exec rake tmp:create yarn:install assets:precompile  >> $logfile 2>&1
     echo -e "\n\n running : bundle exec rake tmp:create yarn:install\n\n" >> $logfile 2>&1
+    # mv /usr/bin to front of path here (or /usr/local/bin to end)
+    PATH=/usr/bin:/bin:/usr/local/games:/usr/games:/snap/bin:/usr/local/bin
     bundle exec rake tmp:create yarn:install >> $logfile 2>&1
 
     # pusher
@@ -338,7 +335,7 @@ install_peatio_tradingui () {
     echo -e "\n - Installing Peatio-trading-ui" | tee -a $logfile
     git clone https://github.com/rubykube/peatio-trading-ui.git  >> $logfile 2>&1
     cd peatio-trading-ui  >> $logfile 2>&1
-    git checkout 1-7-stable  >> $logfile 2>&1
+    git checkout $peatio_version >> $logfile 2>&1
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
     
@@ -350,7 +347,7 @@ install_peatio_tradingui () {
        PLATFORM_ROOT_URL: http://ec2-xx-xx-xxx-xxx.compute-1.amazonaws.com
 
 EOF
-    bundle exec rails server -p 4000
+    nohup bundle exec rails server -p 4000 &
     cd  >> $logfile 2>&1
 }
 
@@ -371,7 +368,7 @@ install_nginx () {
     else
         apphost="127.0.0.1"
     fi
-    sudo cat << EOF > /etc/nginx/sites-available/default
+    cat << EOF > /etc/nginx/sites-available/default
 server {
   server_name http://nax.nacoinex.com;
   listen      80 default_server;
@@ -389,6 +386,7 @@ EOF
     echo -e "If installing on multiple servers you will probably need" | tee -a $logfile
     echo -e "to edit /etc/nginx/sites-available/default and restart nginx" | tee -a $logfile
     sudo systemctl restart nginx  >> $logfile 2>&1
+    cd
 }
 
 
@@ -399,9 +397,11 @@ then
     echo -e "\n !! This script shold be run by the \"peatio\" user!"
     echo -e " !! you are currently logged in as $(whoami)"
     echo -e "    If the peatio user does not exist yet do the following (as root):"
-    echo -e "\n    useradd -c \"Peatio install user\" --groups sudo --shell /bin/bash --create-home peatio\n"
+    echo -e "\n      useradd -c \"Peatio install user\" --groups sudo --shell /bin/bash --create-home peatio\n"
     echo -e "    Then run \"visudo\" and add the following line to the bottom of the file"
-    echo -e "\n    peatio    ALL=(ALL:ALL) NOPASSWD: ALL\n"
+    echo -e "\n      peatio    ALL=(ALL:ALL) NOPASSWD: ALL\n"
+    echo -e "    RabbitMQ is picky, edit /etc/hosts to ensure that the hostname is"
+    echo -e "    included on the 127.0.0.1 line there or it will refuse to start\n"
     echo -e "    Finally, copy this script $0 to /home/peatio, run \"su - peatio\""
     echo -e "    and \"./$(basename $0)\"\n"
     exit 1
