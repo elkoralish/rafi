@@ -122,6 +122,7 @@ install_redis () {
     tar xzf redis-stable.tar.gz >> $logfile 2>&1
     cd redis-stable && make >> $logfile 2>&1
     sudo make install >> $logfile 2>&1
+    #utils/install_server.sh # 6 cr for defaults
     nohup redis-server &
     sleep 1
     cd
@@ -269,6 +270,13 @@ install_peatio () {
     echo "any key to continue" 
     read anykey
     bundle install  >> $logfile 2>&1
+    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    ls -l /var/lib/gems/2.5.0/gems | tee -a $logfile
+    echo "any key to continue" 
+    read anykey
+    bundle install  >> $logfile 2>&1
+
+
     bin/init_config  >> $logfile 2>&1
     sudo npm install -g yarn  >> $logfile 2>&1
     ###npm install -g yarn  >> $logfile 2>&1
