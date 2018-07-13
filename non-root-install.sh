@@ -111,7 +111,7 @@ EOF
     echo "export DATABASE_HOST=$apphost" >> $HOME/.bashrc
     echo "export DATABASE_USER=root" >> $HOME/.bashrc
     #echo "export DATABASE_PASS=$mysqlroot" >> $HOME/.bashrc
-    source $HOME/.bashrc
+    #source $HOME/.bashrc
 }
 
 install_redis () {
@@ -244,6 +244,8 @@ install_peatio () {
 
     # make sure the same version for peatio-trading-ui is installed
     git checkout $peatio_version  >> $logfile 2>&1
+    # no idea why this is suddenly necessary
+    #sudo chmod 755 /var/lib/gems/2.5.0/cache
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
     sudo npm install -g yarn  >> $logfile 2>&1
@@ -253,7 +255,9 @@ install_peatio () {
     ###bundle exec rake tmp:create yarn:install assets:precompile  >> $logfile 2>&1
     echo -e "\n\n running : bundle exec rake tmp:create yarn:install\n\n" >> $logfile 2>&1
     # mv /usr/bin to front of path here (or /usr/local/bin to end)
-    PATH=/usr/bin:/bin:/usr/local/games:/usr/games:/snap/bin:/usr/local/bin
+    export PATH=/usr/bin:/bin:/usr/local/games:/usr/games:/snap/bin:/usr/local/bin
+    # another unkown
+    sudo chmod 755 /home/peatio/.config
     bundle exec rake tmp:create yarn:install >> $logfile 2>&1
 
     # pusher
@@ -406,6 +410,8 @@ then
     echo -e "    and \"./$(basename $0)\"\n"
     exit 1
 fi
+# backup original environment files
+tar cvf /home/peatio/original_dotfiles.tar .??*
 
 cd $HOME
 umask 0077
