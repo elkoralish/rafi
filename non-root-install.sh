@@ -123,6 +123,7 @@ install_redis () {
     cd redis-stable && make >> $logfile 2>&1
     sudo make install >> $logfile 2>&1
     nohup redis-server &
+    sleep 1
     cd
 }
 
@@ -245,13 +246,20 @@ install_peatio () {
     # make sure the same version for peatio-trading-ui is installed
     git checkout $peatio_version  >> $logfile 2>&1
     # no idea why this is suddenly necessary
+
+    #sudo mkdir /var/lib/gems/2.5.0
+    #sudo chmod 755 /var/lib/gems/2.5.0/cache
+    #ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    #sleep 1 
+    #ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    #echo "any key to continue" 
+    #read anykey
+    bundle install  >> $logfile 2>&1
     ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     sudo chmod 755 /var/lib/gems/2.5.0/cache
     ls -l /var/lib/gems/2.5.0 | tee -a $logfile
-    sleep 1 
+    sleep 1
     ls -l /var/lib/gems/2.5.0 | tee -a $logfile
-    echo "any key to continue" 
-    read anykey
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
     sudo npm install -g yarn  >> $logfile 2>&1
