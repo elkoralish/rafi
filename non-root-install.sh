@@ -246,6 +246,11 @@ install_peatio () {
     git checkout $peatio_version  >> $logfile 2>&1
     # no idea why this is suddenly necessary
     sudo chmod 755 /var/lib/gems/2.5.0/cache
+    ls -l /var/lib/gems/2.5.0
+    sleep 1 
+    ls -l /var/lib/gems/2.5.0
+    echo "any key to continue" 
+    read anykey
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
     sudo npm install -g yarn  >> $logfile 2>&1
