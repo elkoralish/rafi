@@ -262,16 +262,19 @@ install_peatio () {
         sudo chmod 755 /var/lib/gems/2.5.0/$dir
     done        
     #bundle install  >> $logfile 2>&1
-    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
-    sudo chmod 755 /var/lib/gems/2.5.0/cache
-    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
-    sleep 1
-    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    mkdir ~/.gem
+    export GEM_HOME=~/.gem
+    export GEM_PATH=~/.gem
+    #ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    #sudo chmod 755 /var/lib/gems/2.5.0/cache
+    #ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    #sleep 1
+    #ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     echo "any key to continue" 
     read anykey
     bundle install  >> $logfile 2>&1
-    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
-    ls -l /var/lib/gems/2.5.0/gems | tee -a $logfile
+    #ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    #ls -l /var/lib/gems/2.5.0/gems | tee -a $logfile
     echo "any key to continue" 
     read anykey
     bundle install  >> $logfile 2>&1
