@@ -245,10 +245,11 @@ install_peatio () {
     # make sure the same version for peatio-trading-ui is installed
     git checkout $peatio_version  >> $logfile 2>&1
     # no idea why this is suddenly necessary
+    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     sudo chmod 755 /var/lib/gems/2.5.0/cache
-    ls -l /var/lib/gems/2.5.0
+    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     sleep 1 
-    ls -l /var/lib/gems/2.5.0
+    ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     echo "any key to continue" 
     read anykey
     bundle install  >> $logfile 2>&1
