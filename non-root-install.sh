@@ -254,12 +254,20 @@ install_peatio () {
     #ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     #echo "any key to continue" 
     #read anykey
-    bundle install  >> $logfile 2>&1
+    dirs="build_info cache doc extensions gems specifications"
+    for dir in $dirs
+    do
+        sudo mkdir /var/lib/gems/2.5.0/$dir
+        sudo chmod 755 /var/lib/gems/2.5.0/$dir
+    done        
+    #bundle install  >> $logfile 2>&1
     ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     sudo chmod 755 /var/lib/gems/2.5.0/cache
     ls -l /var/lib/gems/2.5.0 | tee -a $logfile
     sleep 1
     ls -l /var/lib/gems/2.5.0 | tee -a $logfile
+    echo "any key to continue" 
+    read anykey
     bundle install  >> $logfile 2>&1
     bin/init_config  >> $logfile 2>&1
     sudo npm install -g yarn  >> $logfile 2>&1
