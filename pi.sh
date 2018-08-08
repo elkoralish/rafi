@@ -24,6 +24,14 @@ install_ruby () {
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
+build_my_cnf () {
+cat << EOF > $1
+[client]
+user=$2
+password="$mysqlroot"
+EOF
+}
+
 install_mysql () {
     #echo -e "\n - Installing MySql" | tee -a $logfile
     sudo apt-get -y install mysql-server mysql-client libmysqlclient-dev ##>> $logfile 2>&1
@@ -34,11 +42,7 @@ install_mysql () {
 
     sudo touch /.my.cnf
     sudo chmod 777 /.my.cnf
-    cat << '    EOF' > /.my.cnf
-    [client]
-    user=root
-    password="$mysqlroot"
-    EOF
+    build_my_cnf "/.my.cnf" root
     sudo chmod 400 /.my.cnf
 
     # this command will need to be adjusted if peatio is on another machine
@@ -51,11 +55,7 @@ install_mysql () {
     #fi
     createuser="GRANT ALL PRIVILEGES ON *.* TO \"peatio\"@\"$apphost\" IDENTIFIED BY \"$mysqlroot\";"
     sudo mysql --defaults-file=/.my.cnf -e "$createuser"
-    cat << '    EOF' > ~/.my.cnf.1
-    [client]
-    user=peatio
-    password="$mysqlroot"
-    EOF
+    build_my_cnf "~/.my.cnf" peatio
     chmod 400 ~/.my.cnf
 
     echo " - MySql root password set as $mysqlroot" | tee -a $logfile
