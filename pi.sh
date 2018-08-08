@@ -50,7 +50,7 @@ install_mysql () {
     #    echo -n " ? Enter name or IP address of application server: "
     #    read apphost
     #else
-        apphost="localhost"
+        apphost="127.0.0.1"
     #fi
     createuser="GRANT ALL PRIVILEGES ON *.* TO \"peatio\"@\"$apphost\" IDENTIFIED BY \"$mysqlroot\";"
     sudo mysql --defaults-file=/.my.cnf -e "$createuser"
@@ -80,10 +80,10 @@ install_rabbitmq () {
     wget -O - 'https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc' | sudo apt-key add -
     echo "deb https://dl.bintray.com/rabbitmq/debian bionic main erlang" | sudo tee /etc/apt/sources.list.d/bintray.rabbitmq.list
     sudo apt-get update
-    sudo apt-get -y install rabbitmq-server
+    sudo apt-get -y install rabbitmq-server python
     sudo rabbitmq-plugins enable rabbitmq_management
     sudo service rabbitmq-server restart
-    wget http://localhost:15672/cli/rabbitmqadmin
+    wget http://127.0.0.1:15672/cli/rabbitmqadmin
     chmod +x rabbitmqadmin
     sudo mv rabbitmqadmin /usr/local/sbin
 }
@@ -97,7 +97,7 @@ echo -e "$sep"
 echo -e "$sep"
 #install_redis
 echo -e "$sep"
-install_rabitmq
+install_rabbitmq
 echo -e "$sep"
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
