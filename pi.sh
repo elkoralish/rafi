@@ -1,18 +1,77 @@
 #!/bin/bash
+# vim: syntax=sh:tabstop=4:expandtab
 
 echo $(whoami)
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
-sudo apt-get install -y git curl zlib1g-dev build-essential \
-  libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 \
-  libxml2-dev libxslt1-dev libcurl4-openssl-dev libffi-dev ruby
+install_ruby () {
+    sudo apt-get install -y git curl zlib1g-dev build-essential \
+      libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 \
+      libxml2-dev libxslt1-dev libcurl4-openssl-dev libffi-dev ruby
 
-gpg --keyserver hkp://keys.gnupg.net:80 \
-    --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 \
-                7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+    gpg --keyserver hkp://keys.gnupg.net:80 \
+        --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 \
+                    7D2BAF1CF37B13E2069D6956105BD0E739499BDB
 
-curl -sSL https://get.rvm.io | bash -s stable --ruby=2.5.0 --gems=rails
+    curl -sSL https://get.rvm.io | bash -s stable --ruby=2.5.0 --gems=rails
 
-echo "gem: --no-ri --no-rdoc" > ~/.gemrc
+    echo "gem: --no-ri --no-rdoc" > ~/.gemrc
+
+# ok, not sure here if we need to source .bash_profile (rvm function) or .bashrc (PATH)
+# also "To start using RVM you need to run `source /home/peatio/.rvm/scripts/rvm"
+# not sure if it's needed for install, and if it will screw things up at runtime
+}
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+
+install_mysql () {
+    #echo -e "\n - Installing MySql" | tee -a $logfile
+    sudo apt-get -y install mysql-server mysql-client libmysqlclient-dev ##>> $logfile 2>&1
+    sudo service mysql start
+    echo -n " ? Enter MySql root password: "
+    read mysqlroot
+    mysqladmin -u root password $mysqlroot #>> $logfile 2>&1
+
+    sudo touch /.my.cnf
+    sudo chmod 777 /.my.cnf
+    cat << '    EOF' > /.my.cnf
+    [client]
+    user=root
+    password="$mysqlroot"
+    EOF
+    sudo chmod 400 /.my.cnf
+
+    # this command will need to be adjusted if peatio is on another machine
+    #if [ "$multi" ]
+    #then
+    #    echo -n " ? Enter name or IP address of application server: "
+    #    read apphost
+    #else
+        apphost="localhost"
+    #fi
+    createuser="GRANT ALL PRIVILEGES ON *.* TO \"peatio\"@\"$apphost\" IDENTIFIED BY \"$mysqlroot\";"
+    sudo mysql --defaults-file=/.my.cnf -e "$createuser"
+    cat << '    EOF' > ~/.my.cnf.1
+    [client]
+    user=peatio
+    password="$mysqlroot"
+    EOF
+    chmod 400 ~/.my.cnf
+
+    echo " - MySql root password set as $mysqlroot" | tee -a $logfile
+
+    #echo -e "\n# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=" #>> $HOME/.bashrc
+    echo "# MySql variables" #>> $HOME/.bashrc
+    echo "export DATABASE_HOST=$apphost" #>> $HOME/.bashrc
+    echo "export DATABASE_USER=root" #>> $HOME/.bashrc
+    #echo "export DATABASE_PASS=$mysqlroot" >> $HOME/.bashrc
+    #source $HOME/.bashrc
+}
+
+echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+
+install_ruby
+install_mysql
+
+echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+
