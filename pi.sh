@@ -72,7 +72,7 @@ install_mysql () {
 install_redis () {
     sudo add-apt-repository -y ppa:chris-lea/redis-server
     sudo apt-get update
-    sudo apt-get install redis-server
+    sudo apt-get -y install redis-server
 }
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
