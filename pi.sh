@@ -69,10 +69,19 @@ install_mysql () {
     #source $HOME/.bashrc
 }
 
+install_redis () {
+    sudo add-apt-repository -y ppa:chris-lea/redis-server
+    sudo apt-get update
+    sudo apt-get install redis-server
+}
+
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
-#install_ruby
+install_ruby
 install_mysql
+install_redis
+
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
+# vim: syntax=sh:tabstop=4:expandtab
