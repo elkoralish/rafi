@@ -55,7 +55,8 @@ install_mysql () {
     #fi
     createuser="GRANT ALL PRIVILEGES ON *.* TO \"peatio\"@\"$apphost\" IDENTIFIED BY \"$mysqlroot\";"
     sudo mysql --defaults-file=/.my.cnf -e "$createuser"
-    build_my_cnf "~/.my.cnf" peatio
+    touch ~/.my.cnf
+    build_my_cnf ~/.my.cnf peatio
     chmod 400 ~/.my.cnf
 
     echo " - MySql root password set as $mysqlroot" | tee -a $logfile
@@ -70,7 +71,7 @@ install_mysql () {
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
-install_ruby
+#install_ruby
 install_mysql
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
