@@ -100,6 +100,12 @@ echo -e "$sep"
 install_rabbitmq
 echo -e "$sep"
 
+sudo add-apt-repository universe
+sudo add-apt-repository ppa:bitcoin/bitcoin
+sudo apt-get update
+sudo apt-get install bitcoind
+
+
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
 # vim: syntax=sh:tabstop=4:expandtab
