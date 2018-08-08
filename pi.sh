@@ -1,9 +1,8 @@
 #!/bin/bash
 # vim: syntax=sh:tabstop=4:expandtab
 
-echo $(whoami)
-echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_ruby () {
     sudo apt-get install -y git curl zlib1g-dev build-essential \
       libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 \
@@ -22,8 +21,7 @@ install_ruby () {
 # not sure if it's needed for install, and if it will screw things up at runtime
 }
 
-echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
-
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 build_my_cnf () {
 cat << EOF > $1
 [client]
@@ -32,6 +30,7 @@ password="$mysqlroot"
 EOF
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_mysql () {
     #echo -e "\n - Installing MySql" | tee -a $logfile
     sudo apt-get -y install mysql-server mysql-client libmysqlclient-dev ##>> $logfile 2>&1
@@ -69,21 +68,37 @@ install_mysql () {
     #source $HOME/.bashrc
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_redis () {
     sudo add-apt-repository -y ppa:chris-lea/redis-server
     sudo apt-get update
     sudo apt-get -y install redis-server
 }
 
-echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+install_rabbitmq () {
+    wget -O - 'https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc' | sudo apt-key add -
+    echo "deb https://dl.bintray.com/rabbitmq/debian bionic main erlang" | sudo tee /etc/apt/sources.list.d/bintray.rabbitmq.list
+    sudo apt-get update
+    sudo apt-get -y install rabbitmq-server
+    sudo rabbitmq-plugins enable rabbitmq_management
+    sudo service rabbitmq-server restart
+    wget http://localhost:15672/cli/rabbitmqadmin
+    chmod +x rabbitmqadmin
+    sudo mv rabbitmqadmin /usr/local/sbin
+}
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+echo -e "$sep"
 #install_ruby
+echo -e "$sep"
 #install_mysql
+echo -e "$sep"
 #install_redis
-
-wget -O - 'https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc' | sudo apt-key add -
-echo "deb https://dl.bintray.com/rabbitmq/debian bionic main erlang" | sudo tee /etc/apt/sources.list.d/bintray.rabbitmq.list
-sudo apt-get install rabbitmq-server
+echo -e "$sep"
+install_rabitmq
+echo -e "$sep"
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 
