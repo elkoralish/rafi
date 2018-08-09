@@ -115,7 +115,49 @@ WantedBy=multi-user.target
 EOF
 }
 
+bitcoin_conf () {
+cat << EOF > bitcoin.conf
+server=1
+daemon=1
+
+# If run on the test network instead of the real bitcoin network
+testnet=1
+
+# You must set rpcuser and rpcpassword to secure the JSON-RPC api
+# Please make rpcpassword to something secure, `5gKAgrJv8CQr2CGUhjVbBFLSj29HnE6YGXvfykHJzS3k` for example.
+# Listen for JSON-RPC connections on <port> (default: 8332 or testnet: 18332)
+rpcuser=USERNAME
+rpcpassword=PASSWORD
+rpcport=18332
+
+# Notify when receiving coins
+walletnotify=/usr/local/sbin/rabbitmqadmin publish routing_key=peatio.deposit.coin payload='{"txid":"%s", "currency":"btc"}'
+EOF
+}
+
+install_bitcoind () {
+    sudo add-apt-repository universe
+    echo -e "\n" | sudo add-apt-repository ppa:bitcoin/bitcoin
+    sudo apt-get update
+    sudo apt-get -y install bitcoind
+    # make config file
+    sudo mkdir $bitcoind_home/.bitcoin
+    bitcoin_conf
+    sudo mv bitcoind.conf $bitcoind_home/.bitcoin
+    sudo chown -R $bitcoind_user:$bitcoind_user $bitcoind_home/.bitcoin
+    # configure service
+    bitcoind_service $bitcoind_user $bitcoind_home
+    sudo mv bitcoind.service /lib/systemd/system
+    sudo chown root:root /lib/systemd/system/bitcoind.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable bitcoind.service
+    sudo systemctl daemon-reload
+    sudo systemctl start bitcoind
+}
+
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+bitcoind_user=bitcoin
+bitcoind_home=/var/lib/bitcoin
 sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 echo -e "$sep"
 #install_ruby
@@ -126,23 +168,7 @@ echo -e "$sep"
 echo -e "$sep"
 install_rabbitmq
 echo -e "$sep"
-
-sudo add-apt-repository universe
-sudo add-apt-repository ppa:bitcoin/bitcoin
-sudo apt-get update
-sudo apt-get install bitcoind
-
-sudo mkdir ~/bitcoin/.bitcoin
-sudo mkdir /var/lib/bitcoin/.bitcoin
-
-sudo vi /var/lib/bitcoin/.bitcoin/bitcoin.conf
-sudo chown -R bitcoin:bitcoin /var/lib/bitcoin/.bitcoin
-bitcoind_service bitcoin /var/lib/bitcoin
-sudo mv bitcoind.service /lib/systemd/system
-sudo chown root:root /lib/systemd/system/bitcoind.service
-sudo systemctl daemon-reload
-sudo systemctl start bitcoind
-#add autostart
-
-echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+install_bitcoind
+echo -e "$sep"
+echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!\n"
 # vim: syntax=sh:tabstop=4:expandtab
