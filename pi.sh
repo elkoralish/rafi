@@ -143,7 +143,7 @@ install_bitcoind () {
     # make config file
     sudo mkdir $bitcoind_home/.bitcoin
     bitcoin_conf
-    sudo mv bitcoind.conf $bitcoind_home/.bitcoin
+    sudo mv bitcoin.conf $bitcoind_home/.bitcoin
     sudo chown -R $bitcoind_user:$bitcoind_user $bitcoind_home/.bitcoin
     # configure service
     bitcoind_service $bitcoind_user $bitcoind_home
@@ -152,13 +152,27 @@ install_bitcoind () {
     sudo systemctl daemon-reload
     sudo systemctl enable bitcoind.service
     sudo systemctl daemon-reload
-    sudo systemctl start bitcoind
+    #sudo systemctl start bitcoind
+}
+
+install_phantomjs () {
+    sudo apt-get update
+    sudo apt-get install build-essential chrpath git-core libssl-dev libfontconfig1-dev
+    cd /usr/local/share
+    sudo wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$phantomjs_version-linux-x86_64.tar.bz2
+    sudo tar xjf phantomjs-$phantomjs_version-linux-x86_64.tar.bz2
+    sudo ln -s /usr/local/share/phantomjs-$phantomjs_version-linux-x86_64/bin/phantomjs /usr/local/share/phantomjs
+    sudo ln -s /usr/local/share/phantomjs-$phantomjs_version-linux-x86_64/bin/phantomjs /usr/local/bin/phantomjs
+    sudo ln -s /usr/local/share/phantomjs-$phantomjs_version-linux-x86_64/bin/phantomjs /usr/bin/phantomjs
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 bitcoind_user=bitcoin
 bitcoind_home=/var/lib/bitcoin
-sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+phantomjs_version=1.9.8
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 echo -e "$sep"
 #install_ruby
 echo -e "$sep"
@@ -169,6 +183,8 @@ echo -e "$sep"
 install_rabbitmq
 echo -e "$sep"
 install_bitcoind
+echo -e "$sep"
+install_phantomjs
 echo -e "$sep"
 echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!\n"
 # vim: syntax=sh:tabstop=4:expandtab
