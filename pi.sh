@@ -198,9 +198,11 @@ echo -e "$sep"
 install_imagemagick
 echo -e "$sep"
 
-pwd
-echo -n " ? Enter X  to continue: "
-read anykey
+cd 
+mv ~/.bash_profile ~/.bash_profile.disabled
+source ~/.profile
+#echo -n " ? Enter X  to continue: "
+#read anykey
 mkdir /home/peatio/code
 cd /home/peatio/code
 git clone https://github.com/rubykube/peatio.git
