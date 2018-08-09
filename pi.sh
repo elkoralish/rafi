@@ -91,11 +91,10 @@ install_rabbitmq () {
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 echo -e "$sep"
-install_ruby
+#install_ruby
 echo -e "$sep"
-install_mysql
+#install_mysql
 echo -e "$sep"
-exit
 #install_redis
 echo -e "$sep"
 install_rabbitmq
