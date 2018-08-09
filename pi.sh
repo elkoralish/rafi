@@ -183,23 +183,26 @@ phantomjs_version=1.9.8
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 echo -e "$sep"
-#install_ruby
+install_ruby
 echo -e "$sep"
-#install_mysql
+install_mysql
 echo -e "$sep"
-#install_redis
+install_redis
 echo -e "$sep"
 install_rabbitmq
 echo -e "$sep"
-#install_bitcoind
+install_bitcoind
 echo -e "$sep"
-#install_phantomjs
+install_phantomjs
 echo -e "$sep"
-#install_imagemagick
+install_imagemagick
 echo -e "$sep"
 
-mkdir code
-cd code
+pwd
+echo -n " ? Enter X  to continue: "
+read anykey
+mkdir /home/peatio/code
+cd /home/peatio/code
 git clone https://github.com/rubykube/peatio.git
 cd peatio
 bundle install
