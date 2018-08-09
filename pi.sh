@@ -88,6 +88,33 @@ install_rabbitmq () {
     sudo mv rabbitmqadmin /usr/local/sbin
 }
 
+bitcoind_service () {
+cat << EOF > bitcoind.service
+[Unit]
+Description=Bitcoin's distributed currency daemon
+After=network.target
+
+[Service]
+User=$1
+Group=$1
+
+Type=forking
+PIDFile=$2/.bitcoin/bitcoind.pid
+ExecStart=/usr/bin/bitcoind -daemon -pid=$2/.bitcoin/bitcoind.pid \
+-conf=$2/.bitcoin/bitcoin.conf -datadir=$2/.bitcoin/ -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
+
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 echo -e "$sep"
@@ -105,7 +132,17 @@ sudo add-apt-repository ppa:bitcoin/bitcoin
 sudo apt-get update
 sudo apt-get install bitcoind
 
+sudo mkdir ~/bitcoin/.bitcoin
+sudo mkdir /var/lib/bitcoin/.bitcoin
+
+sudo vi /var/lib/bitcoin/.bitcoin/bitcoin.conf
+sudo chown -R bitcoin:bitcoin /var/lib/bitcoin/.bitcoin
+bitcoind_service bitcoin /var/lib/bitcoin
+sudo mv bitcoind.service /lib/systemd/system
+sudo chown root:root /lib/systemd/system/bitcoind.service
+sudo systemctl daemon-reload
+sudo systemctl start bitcoind
+#add autostart
 
 echo -e "\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
-
 # vim: syntax=sh:tabstop=4:expandtab
