@@ -4,7 +4,7 @@
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_ruby () {
-    sudo apt-get install -y git curl zlib1g-dev build-essential \
+    sudo apt-get install -y git curl imagemagick zlib1g-dev build-essential \
       libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 \
       libxml2-dev libxslt1-dev libcurl4-openssl-dev libffi-dev ruby
 
@@ -157,13 +157,18 @@ install_bitcoind () {
 
 install_phantomjs () {
     sudo apt-get update
-    sudo apt-get install build-essential chrpath git-core libssl-dev libfontconfig1-dev
+    sudo apt-get -y install build-essential chrpath git-core libssl-dev libfontconfig1-dev
     cd /usr/local/share
     sudo wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$phantomjs_version-linux-x86_64.tar.bz2
     sudo tar xjf phantomjs-$phantomjs_version-linux-x86_64.tar.bz2
     sudo ln -s /usr/local/share/phantomjs-$phantomjs_version-linux-x86_64/bin/phantomjs /usr/local/share/phantomjs
     sudo ln -s /usr/local/share/phantomjs-$phantomjs_version-linux-x86_64/bin/phantomjs /usr/local/bin/phantomjs
     sudo ln -s /usr/local/share/phantomjs-$phantomjs_version-linux-x86_64/bin/phantomjs /usr/bin/phantomjs
+}
+
+install_js_runtime () {
+curl -sL https://deb.nodesource.com/setup_8.x | sudo bash -
+sudo apt-get -y install nodejs
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
