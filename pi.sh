@@ -4,7 +4,7 @@
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_ruby () {
-    sudo apt-get install -y git curl imagemagick zlib1g-dev build-essential \
+    sudo apt-get install -y git curl zlib1g-dev build-essential \
       libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 \
       libxml2-dev libxslt1-dev libcurl4-openssl-dev libffi-dev ruby
 
@@ -167,8 +167,12 @@ install_phantomjs () {
 }
 
 install_js_runtime () {
-curl -sL https://deb.nodesource.com/setup_8.x | sudo bash -
-sudo apt-get -y install nodejs
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo bash -
+    sudo apt-get -y install nodejs
+}
+
+install_imagemagick () {
+    sudo apt-get -y install imagemagick
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -190,6 +194,8 @@ echo -e "$sep"
 install_bitcoind
 echo -e "$sep"
 install_phantomjs
+echo -e "$sep"
+install_imagemagick
 echo -e "$sep"
 echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!\n"
 # vim: syntax=sh:tabstop=4:expandtab
