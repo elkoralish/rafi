@@ -50,7 +50,7 @@ install_mysql () {
     #    echo -n " ? Enter name or IP address of application server: "
     #    read apphost
     #else
-        apphost="127.0.0.1"
+        apphost="localhost"
     #fi
     createuser="GRANT ALL PRIVILEGES ON *.* TO \"peatio\"@\"$apphost\" IDENTIFIED BY \"$mysqlroot\";"
     sudo mysql --defaults-file=/.my.cnf -e "$createuser"
@@ -91,10 +91,11 @@ install_rabbitmq () {
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 echo -e "$sep"
-#install_ruby
+install_ruby
 echo -e "$sep"
-#install_mysql
+install_mysql
 echo -e "$sep"
+exit
 #install_redis
 echo -e "$sep"
 install_rabbitmq
