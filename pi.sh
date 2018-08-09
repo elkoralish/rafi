@@ -230,9 +230,12 @@ bundle exec rake tmp:create yarn:install
 
 bundle exec rake db:create
 bundle exec rake db:migrate
-bundle exec rake currencies:seed
-bundle exec rake markets:seed
-
+#bundle exec rake currencies:seed
+#bundle exec rake markets:seed
+bundle exec rake seed:blockchains                   # Adds missing blockchains to database defined at config/seed/blockchains.yml
+bundle exec rake seed:currencies                    # Adds missing currencies to database defined at config/seed/currencies.yml
+bundle exec rake seed:markets                       # Adds missing markets to database defined at config/seed/markets.yml
+bundle exec rake seed:wallets
 
 
 
