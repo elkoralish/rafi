@@ -198,7 +198,19 @@ echo -e "$sep"
 install_imagemagick
 echo -e "$sep"
 
+
+
 cd 
+# =-=-=-=-=-=-=-=-=-=-=  TESTING =-=-=-=-=-=--=-=-=-=-=
+sudo apt-get -y install npm
+echo "export NPM_CONFIG_PREFIX=~/.npm-global" >> ~/.profile
+# these may have to go in .profile, I'd rather leave pass out
+export DATABASE_HOST=localhost
+export DATABASE_USER=peatio
+export DATABASE_PASS="$mysqlroot"
+mkdir ~/.npm-global
+# =-=-=-=-=-=-=-=-=-=-=  TESTING =-=-=-=-=-=--=-=-=-=-=
+
 mv ~/.bash_profile ~/.bash_profile.disabled
 source ~/.profile
 #echo -n " ? Enter X  to continue: "
@@ -208,6 +220,22 @@ cd /home/peatio/code
 git clone https://github.com/rubykube/peatio.git
 cd peatio
 bundle install
+bin/init_config
+npm install -g yarn
+bundle exec rake tmp:create yarn:install
+
+# message about setup pusher
+
+# message abot bitcoin rpc endpoint
+
+bundle exec rake db:create
+bundle exec rake db:migrate
+bundle exec rake currencies:seed
+bundle exec rake markets:seed
+
+
+
+
 
 echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!\n"
 # vim: syntax=sh:tabstop=4:expandtab
