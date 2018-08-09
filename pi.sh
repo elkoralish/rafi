@@ -191,11 +191,18 @@ echo -e "$sep"
 echo -e "$sep"
 install_rabbitmq
 echo -e "$sep"
-install_bitcoind
+#install_bitcoind
 echo -e "$sep"
-install_phantomjs
+#install_phantomjs
 echo -e "$sep"
-install_imagemagick
+#install_imagemagick
 echo -e "$sep"
+
+mkdir code
+cd code
+git clone https://github.com/rubykube/peatio.git
+cd peatio
+bundle install
+
 echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!\n"
 # vim: syntax=sh:tabstop=4:expandtab
