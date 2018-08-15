@@ -175,6 +175,32 @@ install_imagemagick () {
     sudo apt-get -y install imagemagick
 }
 
+peatio_service () {
+cat << EOF > peatio-daemons.service
+[Unit]
+Description=Peatio deamons
+After=network.target
+
+[Service]
+User=$1
+Group=$1
+
+Type=forking
+PIDFile=$2/.peatio/peatio-daemons.pid
+ExecStart=
+-conf=$2/.bitcoin/bitcoin.conf -datadir=$2/.bitcoin/ -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 bitcoind_user=bitcoin
@@ -201,7 +227,6 @@ echo -e "$sep"
 
 
 cd 
-# =-=-=-=-=-=-=-=-=-=-=  TESTING =-=-=-=-=-=--=-=-=-=-=
 sudo apt-get -y install npm
 echo "export NPM_CONFIG_PREFIX=~/.npm-global" >> ~/.profile
 # these may have to go in .profile, I'd rather leave pass out
@@ -209,12 +234,9 @@ export DATABASE_HOST=localhost
 export DATABASE_USER=peatio
 export DATABASE_PASS="$mysqlroot"
 mkdir ~/.npm-global
-# =-=-=-=-=-=-=-=-=-=-=  TESTING =-=-=-=-=-=--=-=-=-=-=
-
 mv ~/.bash_profile ~/.bash_profile.disabled
 source ~/.profile
-#echo -n " ? Enter X  to continue: "
-#read anykey
+
 mkdir /home/peatio/code
 cd /home/peatio/code
 git clone https://github.com/rubykube/peatio.git
@@ -225,7 +247,6 @@ npm install -g yarn
 bundle exec rake tmp:create yarn:install
 
 # message about setup pusher
-
 # message abot bitcoin rpc endpoint
 
 bundle exec rake db:create
@@ -237,6 +258,11 @@ bundle exec rake seed:currencies                    # Adds missing currencies to
 bundle exec rake seed:markets                       # Adds missing markets to database defined at config/seed/markets.yml
 bundle exec rake seed:wallets
 
+sudo mkdir /var/log/peatio
+sudo chown peatio /var/log/peatio
+mkdir log
+ln -s /var/log/peatio log/daemons
+god -c lib/daemons/daemons.god
 
 
 
