@@ -12,7 +12,7 @@ install_ruby () {
         --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 \
                     7D2BAF1CF37B13E2069D6956105BD0E739499BDB
 
-    curl -sSL https://get.rvm.io | bash -s stable --ruby=2.5.0 --gems=rails
+    curl -sSL https://get.rvm.io | bash -s stable --ruby=2.5.1 --gems=rails
 
     echo "gem: --no-ri --no-rdoc" > ~/.gemrc
 
@@ -260,7 +260,7 @@ install_peatio () {
     # put hostname in config file so we can start
     sed -i '/URL_HOST:/s/peatio.tech/'$(hostname)'/g' config/application.yml
 
-    bundle exec rails server -p 3000
+    bundle exec rails server -p 3000 &
     # if you have peatio-workbench on a server start up with the following
     # bundle exec rails server -b 0.0.0.0
 
