@@ -185,10 +185,11 @@ After=network.target
 User=$1
 Group=$1
 
+WorkingDirectory=$2/code/peatio
 Type=forking
 PIDFile=$2/.peatio/peatio-daemons.pid
-ExecStart=
--conf=$2/.bitcoin/bitcoin.conf -datadir=$2/.bitcoin/ -disablewallet
+ExecStart=/home/peatio/.rvm/gems/ruby-2.5.0/bin/god -c lib/daemons/daemons.god
+ExecStop=/home/peatio/.rvm/gems/ruby-2.5.0/bin/god quit
 
 Restart=always
 PrivateTmp=true
@@ -201,6 +202,81 @@ StartLimitBurst=5
 WantedBy=multi-user.target
 EOF
 }
+
+install_oauth2 () {
+cat << EOF
+Setup Google Authentication
+---------------------------
+By default, peatio will ask for Google Authentication. 
+This parameter can be changed in /config/application.yml -> OAUTH2_SIGN_IN_PROVIDER: google
+
+Setup a new Web application on https://console.developers.google.com
+
+Configure the Google Id, Secret and callback in /config/application.yml
+Note: Make sure your host ISN'T an IP in the callback config. Looks like Google auth expect a callback to a DNS only
+  GOOGLE_CLIENT_ID: <Google id>
+  GOOGLE_CLIENT_SECRET: <Google secret>
+  GOOGLE_OAUTH2_REDIRECT_URL: http://ec2-xx-xx-xx-xx.compute-1.amazonaws.com:3000/auth/google_oauth2/callback
+EOF
+}
+
+install_peatio () {
+    cd 
+    sudo apt-get -y install npm
+    echo "export NPM_CONFIG_PREFIX=~/.npm-global" >> ~/.profile
+    # these may have to go in .profile, I'd rather leave pass out
+    export DATABASE_HOST=localhost
+    export DATABASE_USER=peatio
+    export DATABASE_PASS="$mysqlroot"
+    mkdir ~/.npm-global
+    mv ~/.bash_profile ~/.bash_profile.disabled
+    source ~/.profile
+    
+    mkdir /home/peatio/code
+    cd /home/peatio/code
+    git clone https://github.com/rubykube/peatio.git
+    cd peatio
+    bundle install
+    bin/init_config
+    npm install -g yarn
+    bundle exec rake tmp:create yarn:install
+
+    # message about setup pusher
+    # message abot bitcoin rpc endpoint
+    
+    bundle exec rake db:create
+    bundle exec rake db:migrate
+    bundle exec rake seed:blockchains   # Adds missing blockchains to database defined at config/seed/blockchains.yml
+    bundle exec rake seed:currencies    # Adds missing currencies to database defined at config/seed/currencies.yml
+    bundle exec rake seed:markets       # Adds missing markets to database defined at config/seed/markets.yml
+    bundle exec rake seed:wallets
+    
+    sudo mkdir /var/log/peatio
+    sudo chown peatio /var/log/peatio
+    mkdir log
+    ln -s /var/log/peatio log/daemons
+    god -c lib/daemons/daemons.god
+
+    # put hostname in config file so we can start
+    sed -i '/URL_HOST:/s/peatio.tech/'$(hostname)'/g' config/application.yml
+
+    bundle exec rails server -p 3000
+    # if you have peatio-workbench on a server start up with the following
+    # bundle exec rails server -b 0.0.0.0
+
+    # show message about editing config
+
+}
+
+install_peatio_trading_ui () {
+cd ~/code
+git clone https://github.com/rubykube/peatio-trading-ui.git
+cd peatio-trading-ui
+bundle install
+bin/init_config
+#sed -i '/URL_HOST:/s/peatio.tech/'$(hostname)'/g' config/application.yml
+}
+
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 sep="\n =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
 bitcoind_user=bitcoin
@@ -223,46 +299,13 @@ install_phantomjs
 echo -e "$sep"
 install_imagemagick
 echo -e "$sep"
+install_peatio
+echo -e "$sep"
+install_peatio_trading_ui
+echo -e "$sep"
 
 
 
-cd 
-sudo apt-get -y install npm
-echo "export NPM_CONFIG_PREFIX=~/.npm-global" >> ~/.profile
-# these may have to go in .profile, I'd rather leave pass out
-export DATABASE_HOST=localhost
-export DATABASE_USER=peatio
-export DATABASE_PASS="$mysqlroot"
-mkdir ~/.npm-global
-mv ~/.bash_profile ~/.bash_profile.disabled
-source ~/.profile
-
-mkdir /home/peatio/code
-cd /home/peatio/code
-git clone https://github.com/rubykube/peatio.git
-cd peatio
-bundle install
-bin/init_config
-npm install -g yarn
-bundle exec rake tmp:create yarn:install
-
-# message about setup pusher
-# message abot bitcoin rpc endpoint
-
-bundle exec rake db:create
-bundle exec rake db:migrate
-#bundle exec rake currencies:seed
-#bundle exec rake markets:seed
-bundle exec rake seed:blockchains                   # Adds missing blockchains to database defined at config/seed/blockchains.yml
-bundle exec rake seed:currencies                    # Adds missing currencies to database defined at config/seed/currencies.yml
-bundle exec rake seed:markets                       # Adds missing markets to database defined at config/seed/markets.yml
-bundle exec rake seed:wallets
-
-sudo mkdir /var/log/peatio
-sudo chown peatio /var/log/peatio
-mkdir log
-ln -s /var/log/peatio log/daemons
-god -c lib/daemons/daemons.god
 
 
 
