@@ -276,9 +276,24 @@ install_peatio_trading_ui () {
 cd ~/code
 git clone https://github.com/rubykube/peatio-trading-ui.git
 cd peatio-trading-ui
+sed -i '/mini_racer/s/0.1/0.2/g' Gemfile # mini_racer 0.1.15 won't compile, hope this works
 bundle install
 bin/init_config
-#sed -i '/URL_HOST:/s/peatio.tech/'$(hostname)'/g' config/application.yml
+sed -i '/PLATFORM_ROOT_URL:/s/peatio.tech/'$(hostname)'/g' config/application.yml
+
+  # Set root URL to Peatio platform. It will be used to fetch variables which is trading interface driven by.
+#  PLATFORM_ROOT_URL: http://peatio.tech
+
+  # Set URL where you wan to redirect from trading ui menubar
+#  FRONTEND_ROOT_URL: http://peatio.tech
+
+  # Set to "true" to disable access via unsecured HTTP, send HSTS headers and use secure cookies.
+#  FORCE_SECURE_CONNECTION: false
+
+  # Customize title of markers page using the variable below:
+#  TITLE: PEATIO
+
+bundle exec rails server -p 4000
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
