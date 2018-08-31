@@ -7,12 +7,10 @@ User=peatio
 Group=peatio
 
 WorkingDirectory=/home/peatio
-Type=forking
+Type=simple
 PIDFile=/home/peatio/.peatio/peatio-daemons.pid
 EnvironmentFile=/home/peatio/.profile
-#ExecStart=-/home/peatio/start
-ExecStart=/bin/bash -lc 'cd /home/peatio/code/peatio && PATH=/home/peatio/.rvm/gems/ruby-2.5.0/bin:/home/peatio/.rvm/gems/ruby-2.5.0@global/bin:/home/peatio/.rvm/rubies/ruby-2.5.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/snap/bin:/home/peatio/.rvm/bin exec god -c /home/peatio/code/peatio/lib/daemons/daemons.god
-#ExecStart=/bin/bash -lc 'cd /home/peatio/code/peatio && PATH=/home/peatio/.rvm/gems/ruby-2.5.0/bin:/home/peatio/.rvm/gems/ruby-2.5.0@global/bin:/home/peatio/.rvm/rubies/ruby-2.5.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/snap/bin:/home/peatio/.rvm/bin /home/peatio/.rvm/gems/ruby-2.5.0/bin/god -c lib/daemons/daemons.god
+ExecStart=/bin/bash -lc '/home/peatio/startup.sh'
 ExecStop=/home/peatio/.rvm/gems/ruby-2.5.0/bin/god quit
 
 Restart=always
