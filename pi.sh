@@ -354,66 +354,57 @@ bitcoind_home=/var/lib/bitcoin
 phantomjs_version=1.9.8
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-if [ "$1" = "webserver" ]
-then
-    multi="True"; echo -e "$sep"
-    install_nginx; echo -e "$sep"
-elif [ "$1" = "appserver" ]
-then
-    multi="True"; echo -e "$sep"
-    install_ruby; echo -e "$sep"
-    install_redis; echo -e "$sep"
-    install_rabbitmq; echo -e "$sep"
-    install_bitcoind; echo -e "$sep"
-    install_phantomjs; echo -e "$sep"
-    install_jsruntime; echo -e "$sep"
-    install_imagemagick; echo -e "$sep"
-    install_peatio; echo -e "$sep"
-    install_peatio_trading_ui; echo -e "$sep"
-elif [ "$1" = "database" ]
-then
-    multi="True"; echo -e "$sep"
-    install_mysql; echo -e "$sep"
-elif [ "$1" = "all" ]
-then
-    unset multi
-    install_ruby; echo -e "$sep"
-    install_mysql; echo -e "$sep"
-    install_redis; echo -e "$sep"
-    install_rabbitmq; echo -e "$sep"
-    install_bitcoind; echo -e "$sep"
-    install_phantomjs; echo -e "$sep"
-    install_jsruntime; echo -e "$sep"
-    install_imagemagick; echo -e "$sep"
-    install_peatio; echo -e "$sep"
-    install_peatio_trading_ui; echo -e "$sep"
-    install_nginx; echo -e "$sep"
-else
-    echo -e "\nUSAGE: $0 webserver|appserver|database|all\n"
-    exit 1
-fi
+case $1 in
+    webserver)
+        multi="True"; echo -e "$sep"
+        install_nginx; echo -e "$sep"
+        ;;
+    appserver)
+        multi="True"; echo -e "$sep"
+        install_ruby; echo -e "$sep"
+        install_redis; echo -e "$sep"
+        install_rabbitmq; echo -e "$sep"
+        install_bitcoind; echo -e "$sep"
+        install_phantomjs; echo -e "$sep"
+        install_imagemagick; echo -e "$sep"
+        install_peatio; echo -e "$sep"
+        install_peatio_trading_ui; echo -e "$sep"
+        ;;
+    database)
+        multi="True"; echo -e "$sep"
+        install_mysql; echo -e "$sep"
+        ;;
+    all)
+        unset multi
+        install_ruby; echo -e "$sep"
+        install_mysql; echo -e "$sep"
+        install_redis; echo -e "$sep"
+        install_rabbitmq; echo -e "$sep"
+        install_bitcoind; echo -e "$sep"
+        install_phantomjs; echo -e "$sep"
+        install_imagemagick; echo -e "$sep"
+        install_peatio; echo -e "$sep"
+        install_peatio_trading_ui; echo -e "$sep"
+        install_nginx; echo -e "$sep"
+        ;;
+    *)
+        echo -e "\nUSAGE: $0 webserver|appserver|database|all\n"
+        exit 1
+        ;;
+esac
 
 exit 0
 
-echo -e "$sep"
 install_ruby
-echo -e "$sep"
 install_mysql
-echo -e "$sep"
 install_redis
-echo -e "$sep"
 install_rabbitmq
-echo -e "$sep"
 install_bitcoind
-echo -e "$sep"
 install_phantomjs
-echo -e "$sep"
 install_imagemagick
-echo -e "$sep"
 install_peatio
-echo -e "$sep"
 install_peatio_trading_ui
-echo -e "$sep"
+
 
 #    sudo touch /etc/nginx/sites-available/default
 #    sudo chmod 777 /etc/nginx/sites-available/default
