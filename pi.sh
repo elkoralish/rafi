@@ -31,6 +31,7 @@ cat << EOF > $1
 [client]
 user=$2
 password="$mysqlroot"
+host=$3
 EOF
 }
 
@@ -45,22 +46,26 @@ install_mysql () {
 
     sudo touch /.my.cnf
     sudo chmod 777 /.my.cnf
-    build_my_cnf "/.my.cnf" root
+    build_my_cnf "/.my.cnf" root localhost
     sudo chmod 400 /.my.cnf
 
     # this command will need to be adjusted if peatio is on another machine
-    #if [ "$multi" ]
-    #then
-    #    echo -n " ? Enter name or IP address of application server: "
-    #    read apphost
-    #else
+    if [ "$multi" ]
+    then
+        echo -n " ? Enter name or IP address of application server: "
+        read apphost
+    else
         apphost="localhost"
-    #fi
+    # -------------------------------------------------
+    #  we need to build this file on the appserver
+    #  if doing multi install, we'll need the database 
+    #  IP and password during peatio install.
+        touch ~/.my.cnf
+        build_my_cnf ~/.my.cnf peatio $apphost
+        chmod 400 ~/.my.cnf
+    fi
     createuser="GRANT ALL PRIVILEGES ON *.* TO \"peatio\"@\"$apphost\" IDENTIFIED BY \"$mysqlroot\";"
     sudo mysql --defaults-file=/.my.cnf -e "$createuser"
-    touch ~/.my.cnf
-    build_my_cnf ~/.my.cnf peatio
-    chmod 400 ~/.my.cnf
 
     echo " - MySql root password set as $mysqlroot" | tee -a $logfile
 
@@ -229,7 +234,17 @@ install_peatio () {
     sudo apt-get -y install npm
     echo "export NPM_CONFIG_PREFIX=~/.npm-global" >> ~/.profile
     # these may have to go in .profile, I'd rather leave pass out
-    export DATABASE_HOST=localhost
+    if [ "$multi" ]
+    then
+        echo -n " ? Enter name or IP address of database server: "
+        read dbhost
+        echo -n " ? Enter MySql root password: "
+        read mysqlroot
+    else
+        dbhost="localhost"
+    fi
+    build_my_cnf "/home/peatio/.my.cnf" peatio $dbhost
+    export DATABASE_HOST=$dbhost
     export DATABASE_USER=peatio
     export DATABASE_PASS="$mysqlroot"
     mkdir ~/.npm-global
@@ -273,27 +288,63 @@ install_peatio () {
 }
 
 install_peatio_trading_ui () {
-cd ~/code
-git clone https://github.com/rubykube/peatio-trading-ui.git
-cd peatio-trading-ui
-sed -i '/mini_racer/s/0.1/0.2/g' Gemfile # mini_racer 0.1.15 won't compile, hope this works
-bundle install
-bin/init_config
-sed -i '/PLATFORM_ROOT_URL:/s/peatio.tech/'$(hostname)'/g' config/application.yml
+    cd ~/code
+    git clone https://github.com/rubykube/peatio-trading-ui.git
+    cd peatio-trading-ui
+    sed -i '/mini_racer/s/0.1/0.2/g' Gemfile # mini_racer 0.1.15 won't compile, hope this works
+    bundle install
+    bin/init_config
+    sed -i '/PLATFORM_ROOT_URL:/s/peatio.tech/'$(hostname)'/g' config/application.yml
 
-  # Set root URL to Peatio platform. It will be used to fetch variables which is trading interface driven by.
-#  PLATFORM_ROOT_URL: http://peatio.tech
+    # Set root URL to Peatio platform. It will be used to fetch variables which is trading interface driven by.
+    #  PLATFORM_ROOT_URL: http://peatio.tech
 
-  # Set URL where you wan to redirect from trading ui menubar
-#  FRONTEND_ROOT_URL: http://peatio.tech
+    # Set URL where you wan to redirect from trading ui menubar
+    #  FRONTEND_ROOT_URL: http://peatio.tech
 
-  # Set to "true" to disable access via unsecured HTTP, send HSTS headers and use secure cookies.
-#  FORCE_SECURE_CONNECTION: false
+    # Set to "true" to disable access via unsecured HTTP, send HSTS headers and use secure cookies.
+    #  FORCE_SECURE_CONNECTION: false
 
-  # Customize title of markers page using the variable below:
-#  TITLE: PEATIO
+    # Customize title of markers page using the variable below:
+    #  TITLE: PEATIO
 
-bundle exec rails server -p 4000
+    bundle exec rails server -p 4000 &
+}
+
+nginx_config () {
+cat << EOF > default
+server {
+  server_name      peatio.tech;
+  listen           80;
+  proxy_set_header Host peatio.tech;
+
+  location ~ ^/(?:trading|trading-ui-assets)\/ {
+    proxy_pass http://$apphost:4000;
+  }
+
+  location / {
+    proxy_pass http://$apphost:3000;
+  }
+}
+EOF
+}
+
+install_nginx () {
+    cd
+    if [ "$multi" ]
+    then
+        echo -n " ? Enter name or IP address of application server: "
+        read apphost
+    else
+        apphost="127.0.0.1"
+    fi
+    sudo apt-get -y install nginx
+    sudo ufw allow 'Nginx HTTP'
+    sudo mv /etc/nginx/sites-available/default /etc/nginx/sites-available/defualt.orig
+    nginx_config
+    sudo mv default /etc/nginx/sites-available/default
+    sudo systemctl restart nginx
+    cd
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -303,6 +354,47 @@ bitcoind_home=/var/lib/bitcoin
 phantomjs_version=1.9.8
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+if [ "$1" = "webserver" ]
+then
+    multi="True"; echo -e "$sep"
+    install_nginx; echo -e "$sep"
+elif [ "$1" = "appserver" ]
+then
+    multi="True"; echo -e "$sep"
+    install_ruby; echo -e "$sep"
+    install_redis; echo -e "$sep"
+    install_rabbitmq; echo -e "$sep"
+    install_bitcoind; echo -e "$sep"
+    install_phantomjs; echo -e "$sep"
+    install_jsruntime; echo -e "$sep"
+    install_imagemagick; echo -e "$sep"
+    install_peatio; echo -e "$sep"
+    install_peatio_trading_ui; echo -e "$sep"
+elif [ "$1" = "database" ]
+then
+    multi="True"; echo -e "$sep"
+    install_mysql; echo -e "$sep"
+elif [ "$1" = "all" ]
+then
+    unset multi
+    install_ruby; echo -e "$sep"
+    install_mysql; echo -e "$sep"
+    install_redis; echo -e "$sep"
+    install_rabbitmq; echo -e "$sep"
+    install_bitcoind; echo -e "$sep"
+    install_phantomjs; echo -e "$sep"
+    install_jsruntime; echo -e "$sep"
+    install_imagemagick; echo -e "$sep"
+    install_peatio; echo -e "$sep"
+    install_peatio_trading_ui; echo -e "$sep"
+    install_nginx; echo -e "$sep"
+else
+    echo -e "\nUSAGE: $0 webserver|appserver|database|all\n"
+    exit 1
+fi
+
+exit 0
+
 echo -e "$sep"
 install_ruby
 echo -e "$sep"
@@ -323,9 +415,8 @@ echo -e "$sep"
 install_peatio_trading_ui
 echo -e "$sep"
 
-
-
-
+#    sudo touch /etc/nginx/sites-available/default
+#    sudo chmod 777 /etc/nginx/sites-available/default
 
 
 echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!\n"
