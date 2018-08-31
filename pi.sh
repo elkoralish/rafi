@@ -279,6 +279,7 @@ install_peatio () {
     # put hostname in config file so we can start
     sed -i '/URL_HOST:/s/peatio.tech/'$(hostname)'/g' config/application.yml
 
+    echo "daemonize true" >> config/puma.rb
     bundle exec rails server -p 3000 &
     # if you have peatio-workbench on a server start up with the following
     # bundle exec rails server -b 0.0.0.0
@@ -308,6 +309,7 @@ install_peatio_trading_ui () {
     # Customize title of markers page using the variable below:
     #  TITLE: PEATIO
 
+    echo "daemonize true" >> config/puma.rb
     bundle exec rails server -p 4000 &
 }
 
