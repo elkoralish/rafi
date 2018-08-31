@@ -1,7 +1,10 @@
 #!/bin/bash
 # vim: syntax=sh:tabstop=4:expandtab
-
-
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Peatio MultiHost install script
+# Chris Regenye 8/18
+#
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_ruby () {
     sudo apt-get install -y git curl zlib1g-dev build-essential \
@@ -18,11 +21,6 @@ install_ruby () {
     sudo chown peatio .gnupg/trustdb.gpg                                    # ruby 2.5.1
     curl -sSL https://get.rvm.io | bash -s stable --ruby=2.5.1 --gems=rails # ruby 2.5.1
     #curl -sSL https://get.rvm.io | bash -s stable --ruby=2.5.0 --gems=rails 
-
-
-# ok, not sure here if we need to source .bash_profile (rvm function) or .bashrc (PATH)
-# also "To start using RVM you need to run `source /home/peatio/.rvm/scripts/rvm"
-# not sure if it's needed for install, and if it will screw things up at runtime
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -56,10 +54,10 @@ install_mysql () {
         read apphost
     else
         apphost="localhost"
-    # -------------------------------------------------
-    #  we need to build this file on the appserver
-    #  if doing multi install, we'll need the database 
-    #  IP and password during peatio install.
+        # -------------------------------------------------
+        #  this part is done from install_peatio
+        #  if doing multi install. It'll prompt for IP and
+        #  password for the database
         touch ~/.my.cnf
         build_my_cnf ~/.my.cnf peatio $apphost
         chmod 400 ~/.my.cnf
@@ -97,6 +95,7 @@ install_rabbitmq () {
     sudo mv rabbitmqadmin /usr/local/sbin
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 bitcoind_service () {
 cat << EOF > bitcoind.service
 [Unit]
@@ -124,6 +123,7 @@ WantedBy=multi-user.target
 EOF
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 bitcoin_conf () {
 cat << EOF > bitcoin.conf
 server=1
@@ -144,6 +144,7 @@ walletnotify=/usr/local/sbin/rabbitmqadmin publish routing_key=peatio.deposit.co
 EOF
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_bitcoind () {
     sudo add-apt-repository universe
     echo -e "\n" | sudo add-apt-repository ppa:bitcoin/bitcoin
@@ -164,6 +165,7 @@ install_bitcoind () {
     #sudo systemctl start bitcoind
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_phantomjs () {
     sudo apt-get update
     sudo apt-get -y install build-essential chrpath git-core libssl-dev libfontconfig1-dev
@@ -175,15 +177,18 @@ install_phantomjs () {
     sudo ln -s /usr/local/share/phantomjs-$phantomjs_version-linux-x86_64/bin/phantomjs /usr/bin/phantomjs
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_js_runtime () {
     curl -sL https://deb.nodesource.com/setup_8.x | sudo bash -
     sudo apt-get -y install nodejs
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_imagemagick () {
     sudo apt-get -y install imagemagick
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 peatio_service () {
 cat << EOF > peatio-daemons.service
 [Unit]
@@ -212,12 +217,13 @@ WantedBy=multi-user.target
 EOF
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_oauth2 () {
 cat << EOF
 Setup Google Authentication
 ---------------------------
 By default, peatio will ask for Google Authentication. 
-This parameter can be changed in /config/application.yml -> OAUTH2_SIGN_IN_PROVIDER: google
+This parameter can be changed in /home/peatio/code/peatio/config/application.yml -> OAUTH2_SIGN_IN_PROVIDER: google
 
 Setup a new Web application on https://console.developers.google.com
 
@@ -226,9 +232,11 @@ Note: Make sure your host ISN'T an IP in the callback config. Looks like Google 
   GOOGLE_CLIENT_ID: <Google id>
   GOOGLE_CLIENT_SECRET: <Google secret>
   GOOGLE_OAUTH2_REDIRECT_URL: http://ec2-xx-xx-xx-xx.compute-1.amazonaws.com:3000/auth/google_oauth2/callback
+
 EOF
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_peatio () {
     cd 
     sudo apt-get -y install npm
@@ -288,6 +296,7 @@ install_peatio () {
 
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_peatio_trading_ui () {
     cd ~/code
     git clone https://github.com/rubykube/peatio-trading-ui.git
@@ -313,6 +322,7 @@ install_peatio_trading_ui () {
     bundle exec rails server -p 4000 &
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 nginx_config () {
 cat << EOF > default
 server {
@@ -331,6 +341,7 @@ server {
 EOF
 }
 
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 install_nginx () {
     cd
     if [ "$multi" ]
@@ -347,6 +358,27 @@ install_nginx () {
     sudo mv default /etc/nginx/sites-available/default
     sudo systemctl restart nginx
     cd
+}
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+build_readme () {
+cat << EOF > README
+
+Installation complete.
+
+You may want to check the following config files and change values appropriately:
+
+/var/lib/bitcoin/.bitcoin/bitcoin.conf
+/home/peatio/code/peatio/config/application.yml
+/home/peatio/code/peatio-trading-ui/config/application.yml
+
+Also, to set up google authentication the following information is relevant:
+
+EOF
+install_oauth2 >> README
+echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!" >> README
+echo -e " !! when done, restart bitcoind with 'sudo servicee bitcoind restart'.    !!\n" >> README
+cat README
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -368,9 +400,11 @@ case $1 in
         install_rabbitmq; echo -e "$sep"
         install_bitcoind; echo -e "$sep"
         install_phantomjs; echo -e "$sep"
+        install_js_runtime; echo -e "$sep"
         install_imagemagick; echo -e "$sep"
         install_peatio; echo -e "$sep"
         install_peatio_trading_ui; echo -e "$sep"
+        build_readme; echo -e "$sep"
         ;;
     dbserver)
         multi="True"; echo -e "$sep"
@@ -384,33 +418,17 @@ case $1 in
         install_rabbitmq; echo -e "$sep"
         install_bitcoind; echo -e "$sep"
         install_phantomjs; echo -e "$sep"
+        install_js_runtime; echo -e "$sep"
         install_imagemagick; echo -e "$sep"
         install_peatio; echo -e "$sep"
         install_peatio_trading_ui; echo -e "$sep"
         install_nginx; echo -e "$sep"
+        build_readme; echo -e "$sep"
         ;;
     *)
         echo -e "\nUSAGE: $0 webserver|appserver|dbserver|all\n"
         exit 1
         ;;
 esac
-
 exit 0
-
-install_ruby
-install_mysql
-install_redis
-install_rabbitmq
-install_bitcoind
-install_phantomjs
-install_imagemagick
-install_peatio
-install_peatio_trading_ui
-
-
-#    sudo touch /etc/nginx/sites-available/default
-#    sudo chmod 777 /etc/nginx/sites-available/default
-
-
-echo -e "\n !! Remember to edit the config file $bitcoind_home/.bitcoin/bitcoin.conf !!\n"
 # vim: syntax=sh:tabstop=4:expandtab
