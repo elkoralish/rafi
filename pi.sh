@@ -133,7 +133,7 @@ daemon=1
 testnet=1
 
 # You must set rpcuser and rpcpassword to secure the JSON-RPC api
-# Please make rpcpassword to something secure, `5gKAgrJv8CQr2CGUhjVbBFLSj29HnE6YGXvfykHJzS3k` for example.
+# Please make rpcpassword to something secure, '5gKAgrJv8CQr2CGUhjVbBFLSj29HnE6YGXvfykHJzS3k' for example.
 # Listen for JSON-RPC connections on <port> (default: 8332 or testnet: 18332)
 rpcuser=USERNAME
 rpcpassword=PASSWORD
@@ -372,7 +372,7 @@ case $1 in
         install_peatio; echo -e "$sep"
         install_peatio_trading_ui; echo -e "$sep"
         ;;
-    database)
+    dbserver)
         multi="True"; echo -e "$sep"
         install_mysql; echo -e "$sep"
         ;;
@@ -390,7 +390,7 @@ case $1 in
         install_nginx; echo -e "$sep"
         ;;
     *)
-        echo -e "\nUSAGE: $0 webserver|appserver|database|all\n"
+        echo -e "\nUSAGE: $0 webserver|appserver|dbserver|all\n"
         exit 1
         ;;
 esac
